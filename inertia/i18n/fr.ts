@@ -26,4 +26,5 @@ export default {
     'Ce panel ne gère pas le catalogue publié par le serveur (format {version}). Mets le panel à jour.',
   'loadouts.catalog.invalid': 'Le catalogue publié par le serveur est illisible.',
   'loadouts.unavailable': "La base des armes est injoignable pour l'instant.",
+  'loadouts.not_allowed': "Cette arme n'est pas proposée sur ce round.",
 } as const

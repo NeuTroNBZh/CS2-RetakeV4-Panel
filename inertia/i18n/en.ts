@@ -26,4 +26,5 @@ export default {
     'This panel does not support the catalog published by the server (format {version}). Update the panel.',
   'loadouts.catalog.invalid': 'The catalog published by the server is unreadable.',
   'loadouts.unavailable': 'The weapons database is unreachable right now.',
+  'loadouts.not_allowed': 'This weapon is not offered on this round.',
 } as const
