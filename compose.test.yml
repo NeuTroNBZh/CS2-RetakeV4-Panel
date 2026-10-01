@@ -1,0 +1,14 @@
+# Optional alternative to mysql-memory-server (bin/test.ts): a MySQL on port 3307.
+# Start it, then run the tests with PANEL_TEST_DB=external.
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: panel_test
+    ports: ['3307:3306']
+    command: --default-authentication-plugin=caching_sha2_password
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-proot']
+      interval: 2s
+      retries: 30
