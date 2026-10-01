@@ -18,7 +18,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   LOG_LEVEL: Env.schema.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']),
   APP_KEY: Env.schema.secret(),
   APP_URL: Env.schema.string(),
-  SESSION_DRIVER: Env.schema.enum(['cookie'] as const),
+  SESSION_DRIVER: Env.schema.enum(['cookie', 'memory'] as const),
   LIMITER_STORE: Env.schema.enum(['database', 'memory'] as const),
 
   PANEL_DB_HOST: Env.schema.string({ format: 'host' }),
