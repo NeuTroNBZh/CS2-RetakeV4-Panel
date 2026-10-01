@@ -19,4 +19,4 @@ COPY --from=build --chown=node:node /app/build ./
 USER node
 EXPOSE 3333
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD wget -qO- http://127.0.0.1:3333/health || exit 1
-CMD ["sh", "-c", "node ace migration:run --force && node bin/server.js"]
+CMD ["sh", "-c", "node ace migration:run --force && exec node bin/server.js"]

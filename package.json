@@ -81,14 +81,11 @@
     "@tuyau/core": "^1.2.2",
     "@vinejs/vine": "^4.4.0",
     "@vue/server-renderer": "^3.5.43",
-    "better-sqlite3": "^13.0.3",
     "edge.js": "^6.5.1",
-    "lucide-vue-next": "^1.0.0",
     "luxon": "^3.7.2",
     "mysql2": "^3.24.5",
     "reflect-metadata": "^0.2.2",
-    "vue": "^3.5.43",
-    "vue-sonner": "^2.0.9"
+    "vue": "^3.5.43"
   },
   "hotHook": {
     "boundaries": [
@@ -98,7 +95,6 @@
   },
   "allowScripts": {
     "@swc/core": true,
-    "better-sqlite3": true,
     "esbuild": true,
     "fsevents": true
   },

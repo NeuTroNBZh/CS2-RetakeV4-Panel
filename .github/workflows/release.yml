@@ -6,7 +6,25 @@ permissions:
   contents: write
   packages: write
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # .adonisjs/ is gitignored; NODE_ENV=test loads the committed .env.test
+      - run: node ace codegen
+        env:
+          NODE_ENV: test
+      - run: npm run lint
+      - run: npm run typecheck
+      # Tests start their own ephemeral MySQL (mysql-memory-server)
+      - run: npm run coverage
   image:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,14 +35,23 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # semver patterns strip the leading "v"; `latest` is only set for stable tags
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/neutronbzh/cs2-retakev4-panel
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ !contains(github.ref_name, '-') }}
+          flavor: |
+            latest=${{ !contains(github.ref_name, '-') }}
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/neutronbzh/cs2-retakev4-panel:${{ github.ref_name }}
-            ghcr.io/neutronbzh/cs2-retakev4-panel:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
       - uses: softprops/action-gh-release@v2
         with:
           files: |

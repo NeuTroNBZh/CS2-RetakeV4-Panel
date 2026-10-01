@@ -4,7 +4,7 @@
 
 ## What it is
 
-A web panel for the [RetakeV4](https://github.com/NeuTroNBZh) CS2 plugin. Players sign in with Steam and choose their weapons per team and round type; the choices are stored in the plugin database and applied from the next round, without leaving the browser.
+A web panel for the [RetakeV4](https://github.com/NeuTroNBZh/CS2-RetakeV4) CS2 plugin. Players sign in with Steam and choose their weapons per team and round type; the choices are stored in the plugin database and applied from the next round, without leaving the browser.
 
 ## Requirements
 

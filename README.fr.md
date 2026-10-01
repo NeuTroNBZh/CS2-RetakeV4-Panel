@@ -4,7 +4,7 @@
 
 ## Présentation
 
-Panel web du plugin CS2 [RetakeV4](https://github.com/NeuTroNBZh). Les joueurs se connectent avec Steam et choisissent leurs armes par équipe et par type de round ; les choix sont enregistrés dans la base du plugin et appliqués dès le round suivant, sans quitter le navigateur.
+Panel web du plugin CS2 [RetakeV4](https://github.com/NeuTroNBZh/CS2-RetakeV4). Les joueurs se connectent avec Steam et choisissent leurs armes par équipe et par type de round ; les choix sont enregistrés dans la base du plugin et appliqués dès le round suivant, sans quitter le navigateur.
 
 ## Prérequis
 
