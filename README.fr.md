@@ -23,6 +23,11 @@ Panel web du plugin CS2 [RetakeV4](https://github.com/NeuTroNBZh). Les joueurs s
 
 Démarrer le panel une fois MySQL joignable. Le panel teste ses connexions aux bases une seule fois au démarrage ; si MySQL était arrêté à ce moment, le module `loadouts` reste désactivé jusqu'au redémarrage du panel (`docker compose restart panel`). Le fichier compose n'inclut pas MySQL, il n'y a donc pas de `depends_on` dessus.
 
+### Emplacement de MySQL
+
+- MySQL ailleurs : renseigner `PANEL_DB_HOST` et `RETAKE_DB_HOST` avec son nom d'hôte ou son IP.
+- MySQL sur la même machine que Docker : dans un conteneur `localhost` désigne le conteneur lui-même, il faut donc utiliser `host.docker.internal` et décommenter les lignes `extra_hosts: ["host.docker.internal:host-gateway"]` du service `panel` dans `docker-compose.yml` (ce nom n'est pas défini sous Linux sinon). Le `bind-address` de MySQL doit accepter le bridge Docker (par exemple `0.0.0.0` ou l'IP du bridge), pas seulement `127.0.0.1`, et l'hôte de l'utilisateur MySQL (`'retake_panel'@'%'` dans `mysql-user.sql`) doit couvrir le réseau Docker.
+
 ## Configuration
 
 | Variable | Obligatoire | Rôle |
@@ -47,7 +52,7 @@ Démarrer le panel une fois MySQL joignable. Le panel teste ses connexions aux b
 - HTTPS obligatoire : en production le panel refuse de démarrer si `APP_URL` n'est pas en `https://`.
 - Utiliser l'utilisateur MySQL limité de `docker/mysql-user.sql` : il lit uniquement le catalogue et lit/écrit `player_loadout` dans la base du plugin.
 - `PANEL_ADMINS` donne les droits d'administration aux seuls SteamID64 listés.
-- Le panel ne fait confiance à `X-Forwarded-For` que depuis un pair privé ou loopback (le conteneur Caddy) ; ne pas publier directement le port 3333.
+- Le panel ne fait confiance à `X-Forwarded-For` que depuis un pair privé ou loopback (le conteneur Caddy) ; ne pas publier directement le port 3333 : un port publié peut faire apparaître un client comme un proxy privé de confiance et falsifier `X-Forwarded-For`, ce qui contourne la limite de tentatives de connexion.
 
 ## Développement
 

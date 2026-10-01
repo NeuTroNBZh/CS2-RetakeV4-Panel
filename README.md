@@ -23,6 +23,11 @@ A web panel for the [RetakeV4](https://github.com/NeuTroNBZh) CS2 plugin. Player
 
 Start the panel after MySQL is reachable. The panel checks its database connections once at boot; if MySQL was down at that moment, the `loadouts` module stays disabled until the panel is restarted (`docker compose restart panel`). The compose file does not include MySQL, so there is no `depends_on` for it.
 
+### MySQL location
+
+- MySQL elsewhere: set `PANEL_DB_HOST` and `RETAKE_DB_HOST` to its host name or IP.
+- MySQL on the same machine as Docker: inside a container `localhost` is the container itself, so use `host.docker.internal` and uncomment the `extra_hosts: ["host.docker.internal:host-gateway"]` lines of the `panel` service in `docker-compose.yml` (the name is not defined on Linux otherwise). MySQL `bind-address` must accept the Docker bridge (for example `0.0.0.0` or the bridge IP), not only `127.0.0.1`, and the MySQL user host (`'retake_panel'@'%'` in `mysql-user.sql`) must cover the Docker network.
+
 ## Configuration
 
 | Variable | Required | Role |
@@ -47,7 +52,7 @@ Start the panel after MySQL is reachable. The panel checks its database connecti
 - HTTPS is mandatory: the panel refuses to start in production with an `APP_URL` that is not `https://`.
 - Use the limited MySQL user from `docker/mysql-user.sql`: it can only read the catalog and read/write `player_loadout` in the plugin database.
 - `PANEL_ADMINS` grants admin rights to the listed SteamID64 only.
-- The panel trusts `X-Forwarded-For` only from private or loopback peers (the Caddy container); do not publish port 3333 directly.
+- The panel trusts `X-Forwarded-For` only from private or loopback peers (the Caddy container); do not publish port 3333 directly: a published port can make a client appear as a trusted private proxy and spoof `X-Forwarded-For`, which bypasses the login rate limit.
 
 ## Development
 

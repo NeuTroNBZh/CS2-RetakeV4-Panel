@@ -4,6 +4,10 @@ services:
   panel:
     image: ghcr.io/neutronbzh/cs2-retakev4-panel:latest
     env_file: .env
+    # MySQL on the same machine as Docker: uncomment, then set PANEL_DB_HOST and
+    # RETAKE_DB_HOST to host.docker.internal in .env (see the README).
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
     restart: unless-stopped
   caddy:
     image: caddy:2
