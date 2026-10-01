@@ -3,6 +3,5 @@
   "compilerOptions": {
     "rootDir": "./",
     "outDir": "./build"
-  },
-  "references": [{ "path": "./tsconfig.inertia.json" }]
+  }
 }

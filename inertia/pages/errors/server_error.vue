@@ -1,25 +1,16 @@
 <script setup lang="ts">
-import MarketingLayout from '~/layouts/marketing.vue'
+import { usePage } from '@inertiajs/vue3'
+import DefaultLayout from '../../layouts/default.vue'
+import { translate, type Locale } from '../../i18n/index.js'
+
+const page = usePage<{ locale: Locale }>()
+const t = (key: string) => translate(page.props.locale, key)
 </script>
 
 <template>
-  <MarketingLayout>
-    <div class="home">
-      <article class="prose-card">
-        <div class="pc-top">
-          <span class="pc-status mono tag" :style="{ color: '#c0392b' }">
-            <span class="dot" /> 500
-          </span>
-        </div>
-        <div class="pc-lead">
-          <span>Something broke.</span>
-          <em>The server hit an unexpected error.</em>
-        </div>
-        <p class="pc-para">
-          Try again in a moment. If the problem persists, check the server logs for the underlying
-          exception.
-        </p>
-      </article>
-    </div>
-  </MarketingLayout>
+  <DefaultLayout>
+    <h1>500</h1>
+    <p>{{ t('core.error.server') }}</p>
+    <a href="/" class="button">{{ t('core.back_home') }}</a>
+  </DefaultLayout>
 </template>

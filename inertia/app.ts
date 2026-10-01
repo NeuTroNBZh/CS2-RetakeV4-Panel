@@ -1,5 +1,4 @@
 import './css/app.css'
-import 'vue-sonner/style.css'
 import { client } from '~/client'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { TuyauProvider } from '@adonisjs/inertia/vue'
@@ -22,6 +21,6 @@ createInertiaApp({
       .mount(el)
   },
   progress: {
-    color: '#4B5563',
+    color: '#e0a43a',
   },
 })

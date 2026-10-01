@@ -1,49 +1,53 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
-import PlayerTransformer from '#transformers/player_transformer'
 import BaseInertiaMiddleware from '@adonisjs/inertia/inertia_middleware'
+import env from '#start/env'
+import { activeModules } from '#start/modules'
+import { can, parseAdmins } from '#core/permissions'
+import { LOCALE_COOKIE, resolveLocale } from '#core/locale'
+
+const admins = parseAdmins(env.get('PANEL_ADMINS'))
 
 export default class InertiaMiddleware extends BaseInertiaMiddleware {
   share(ctx: HttpContext) {
     /**
-     * The share method is called everytime an Inertia page is rendered. In
-     * certain cases, a page may get rendered before the session middleware
-     * or the auth middleware are executed. For example: During a 404 request.
-     *
-     * In that case, we must always assume that HttpContext is not fully hydrated
-     * with all the properties
+     * A page may be rendered before the session or auth middleware ran (for
+     * example on a 404), so the context is only partially hydrated here.
      */
-    const { auth, request } = ctx as Partial<HttpContext>
+    const { session, auth } = ctx as Partial<HttpContext>
+    const player = auth?.user ?? null
+    const steamId = player?.steamId ?? null
+    const flashed = (key: string): string | undefined => {
+      const value = session?.flashMessages.get(key)
+      return typeof value === 'string' ? value : undefined
+    }
 
-    const theme: 'light' | 'dark' =
-      request?.plainCookie('app_theme', {
-        defaultValue: 'light',
-        encoded: false,
-      }) ?? 'light'
-
-    /**
-     * Data shared with all Inertia pages. Make sure you are using
-     * transformers for rich data-types like Models.
-     */
     return {
       errors: ctx.inertia.always(this.getValidationErrors(ctx)),
-      user: ctx.inertia.always(auth?.user ? PlayerTransformer.transform(auth.user) : undefined),
-      preferences: ctx.inertia.always({ theme }),
+      flash: ctx.inertia.always({ error: flashed('error'), success: flashed('success') }),
+      locale: ctx.inertia.always(
+        resolveLocale(
+          ctx.request.cookie(LOCALE_COOKIE),
+          ctx.request.header('accept-language'),
+          env.get('PANEL_LOCALE', 'en')
+        )
+      ),
+      user: ctx.inertia.always(
+        player
+          ? {
+              steamId: player.steamId,
+              name: player.displayName ?? player.steamId,
+              avatarUrl: player.avatarUrl,
+            }
+          : null
+      ),
+      menu: ctx.inertia.always(
+        activeModules
+          .flatMap((module) => module.menu)
+          .filter((entry) => can(steamId, entry.permission, admins))
+          .map(({ labelKey, href }) => ({ labelKey, href }))
+      ),
     }
-  }
-
-  flash(ctx: HttpContext) {
-    /**
-     * Flash messages travel in the dedicated `flash` field of the page
-     * object instead of props, and the client strips them from history
-     * state so they never reappear when navigating back.
-     */
-    const { session } = ctx as Partial<HttpContext>
-
-    const success: string | undefined = session?.flashMessages.get('success')
-    const error: string | undefined = session?.flashMessages.get('error')
-
-    return { success, error }
   }
 
   async handle(ctx: HttpContext, next: NextFn) {

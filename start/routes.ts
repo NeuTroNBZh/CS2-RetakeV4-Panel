@@ -12,8 +12,11 @@ import { activeModules } from '#start/modules'
 import { loginThrottle } from '#start/limiter'
 
 const AuthController = () => import('#controllers/auth_controller')
+const HomeController = () => import('#controllers/home_controller')
+const LocaleController = () => import('#controllers/locale_controller')
 
-router.on('/').renderInertia('home', {}).as('home')
+router.get('/', [HomeController, 'show']).as('home')
+router.post('/locale', [LocaleController, 'update']).as('locale.update')
 
 router.get('/login', [AuthController, 'login']).as('auth.login').use(loginThrottle)
 router
