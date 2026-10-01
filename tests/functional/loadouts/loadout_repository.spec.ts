@@ -65,8 +65,9 @@ test.group('LoadoutRepository', (group) => {
       ]
     )
     await repository.setAwp(ALICE, false)
+    const afterReset = await rows(ALICE)
     assert.deepEqual(
-      (await rows(ALICE)).map((r) => r.awp_opt_in),
+      afterReset.map((r) => r.awp_opt_in),
       [0, 0]
     )
   })

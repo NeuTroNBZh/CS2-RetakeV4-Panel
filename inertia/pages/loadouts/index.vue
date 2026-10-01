@@ -7,7 +7,11 @@ import { translate, type Locale } from '../../i18n/index.js'
 
 type Team = 'T' | 'CT'
 type Slot = 'primary' | 'secondary'
-type SlotView = { choices: { id: string; label: string; category: string }[]; selected: string | null; defaultId: string | null }
+type SlotView = {
+  choices: { id: string; label: string; category: string }[]
+  selected: string | null
+  defaultId: string | null
+}
 type RoundTypeView = { name: string; primary: SlotView; secondary: SlotView }
 
 const props = defineProps<{
@@ -19,12 +23,15 @@ const props = defineProps<{
   }
 }>()
 const page = usePage<{ locale: Locale }>()
-const t = (key: string, params?: Record<string, string | number>) => translate(page.props.locale, key, params)
+const t = (key: string, params?: Record<string, string | number>) =>
+  translate(page.props.locale, key, params)
 const team = ref<Team>('CT')
 const slots: Slot[] = ['primary', 'secondary']
 
-const post = (url: string, data: Record<string, string | number | boolean>) => router.post(url, data, { preserveScroll: true })
-const choose = (roundType: string, slot: Slot, weapon: string) => post('/loadouts/weapon', { team: team.value, roundType, slot, weapon })
+const post = (url: string, data: Record<string, string | number | boolean>) =>
+  router.post(url, data, { preserveScroll: true })
+const choose = (roundType: string, slot: Slot, weapon: string) =>
+  post('/loadouts/weapon', { team: team.value, roundType, slot, weapon })
 const reset = (roundType: string) => post('/loadouts/reset', { team: team.value, roundType })
 const toggleAwp = () => post('/loadouts/awp', { optIn: !props.view.awp.optIn })
 const isShown = (slot: SlotView, id: string) => (slot.selected ?? slot.defaultId) === id
@@ -38,7 +45,9 @@ const isShown = (slot: SlotView, id: string) => (slot.selected ?? slot.defaultId
     <p v-else-if="props.view.status === 'unsupported'" class="alert">
       {{ t('loadouts.catalog.unsupported', { version: props.view.formatVersion ?? '?' }) }}
     </p>
-    <p v-else-if="props.view.status === 'invalid'" class="alert">{{ t('loadouts.catalog.invalid') }}</p>
+    <p v-else-if="props.view.status === 'invalid'" class="alert">
+      {{ t('loadouts.catalog.invalid') }}
+    </p>
 
     <template v-else>
       <label v-if="props.view.awp.offered" class="awp-toggle">
@@ -48,7 +57,14 @@ const isShown = (slot: SlotView, id: string) => (slot.selected ?? slot.defaultId
       </label>
 
       <div class="tabs" role="tablist">
-        <button v-for="side in (['T', 'CT'] as const)" :key="side" type="button" role="tab" :aria-selected="team === side" @click="team = side">
+        <button
+          v-for="side in ['T', 'CT'] as const"
+          :key="side"
+          type="button"
+          role="tab"
+          :aria-selected="team === side"
+          @click="team = side"
+        >
           {{ t(`loadouts.team.${side}`) }}
         </button>
       </div>
@@ -57,7 +73,9 @@ const isShown = (slot: SlotView, id: string) => (slot.selected ?? slot.defaultId
       <section v-for="roundType in props.view.teams[team]" :key="roundType.name" class="round-type">
         <header>
           <h2>{{ roundType.name }}</h2>
-          <button type="button" class="link" @click="reset(roundType.name)">{{ t('loadouts.reset') }}</button>
+          <button type="button" class="link" @click="reset(roundType.name)">
+            {{ t('loadouts.reset') }}
+          </button>
         </header>
         <div v-for="slot in slots" :key="slot">
           <template v-if="roundType[slot].choices.length > 1">

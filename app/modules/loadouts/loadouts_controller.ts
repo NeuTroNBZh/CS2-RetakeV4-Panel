@@ -32,7 +32,9 @@ export default class LoadoutsController {
         session.flash('error', 'loadouts.unavailable')
         return response.redirect().back()
       }
-      return response.status(SERVICE_UNAVAILABLE).send({ errors: [{ message: 'loadouts.unavailable' }] })
+      return response
+        .status(SERVICE_UNAVAILABLE)
+        .send({ errors: [{ message: 'loadouts.unavailable' }] })
     }
     session.flash('success', 'loadouts.saved')
     return response.redirect().back()
@@ -44,7 +46,9 @@ export default class LoadoutsController {
         this.repository.catalogRow(this.serverKey()),
         this.repository.preferences(auth.user!.steamId),
       ])
-      return inertia.render('loadouts/index', { view: buildLoadoutsView(readCatalog(row), preferences) })
+      return inertia.render('loadouts/index', {
+        view: buildLoadoutsView(readCatalog(row), preferences),
+      })
     } catch (error) {
       logger.error({ err: error }, 'loadouts: retake database unavailable')
       response.status(SERVICE_UNAVAILABLE)
@@ -67,10 +71,18 @@ export default class LoadoutsController {
         session.flash('error', 'loadouts.not_allowed')
         return response.redirect().back()
       }
-      return response.unprocessableEntity({ errors: [{ field: 'weapon', message: 'loadouts.not_allowed' }] })
+      return response.unprocessableEntity({
+        errors: [{ field: 'weapon', message: 'loadouts.not_allowed' }],
+      })
     }
     return this.guarded(ctx, () =>
-      this.repository.setWeapon(auth.user!.steamId, selection.team, selection.roundType, selection.slot, selection.weapon)
+      this.repository.setWeapon(
+        auth.user!.steamId,
+        selection.team,
+        selection.roundType,
+        selection.slot,
+        selection.weapon
+      )
     )
   }
 

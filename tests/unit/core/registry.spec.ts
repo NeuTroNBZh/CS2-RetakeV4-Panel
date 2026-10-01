@@ -22,15 +22,28 @@ test.group('parseModuleList', () => {
 
 test.group('resolveModules', () => {
   test('activates enabled modules whose connections are ready', ({ assert }) => {
-    const result = resolveModules(['loadouts'], [module('loadouts', ['retake'])], new Set(['panel', 'retake']))
-    assert.deepEqual(result.active.map((m) => m.name), ['loadouts'])
+    const result = resolveModules(
+      ['loadouts'],
+      [module('loadouts', ['retake'])],
+      new Set(['panel', 'retake'])
+    )
+    assert.deepEqual(
+      result.active.map((m) => m.name),
+      ['loadouts']
+    )
     assert.deepEqual(result.disabled, [])
   })
 
   test('disables a module whose connection is missing', ({ assert }) => {
-    const result = resolveModules(['loadouts'], [module('loadouts', ['retake'])], new Set(['panel']))
+    const result = resolveModules(
+      ['loadouts'],
+      [module('loadouts', ['retake'])],
+      new Set(['panel'])
+    )
     assert.deepEqual(result.active, [])
-    assert.deepEqual(result.disabled, [{ name: 'loadouts', reason: 'connection "retake" is not available' }])
+    assert.deepEqual(result.disabled, [
+      { name: 'loadouts', reason: 'connection "retake" is not available' },
+    ])
   })
 
   test('reports unknown modules', ({ assert }) => {

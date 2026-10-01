@@ -50,7 +50,12 @@ function logout() {
           FR
         </button>
         <template v-if="page.props.user">
-          <img v-if="page.props.user.avatarUrl" :src="page.props.user.avatarUrl" alt="" class="avatar" />
+          <img
+            v-if="page.props.user.avatarUrl"
+            :src="page.props.user.avatarUrl"
+            alt=""
+            class="avatar"
+          />
           <span>{{ page.props.user.name }}</span>
           <button type="button" @click="logout">{{ t('core.logout') }}</button>
         </template>

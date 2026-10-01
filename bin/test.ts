@@ -83,10 +83,7 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
       ...config,
       ...{
         setup: runnerHooks.setup,
-        teardown: runnerHooks.teardown.concat([
-          () => app.terminate(),
-          () => stopTestDatabase(),
-        ]),
+        teardown: runnerHooks.teardown.concat([() => app.terminate(), () => stopTestDatabase()]),
       },
     })
   })

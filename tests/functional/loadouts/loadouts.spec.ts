@@ -10,14 +10,22 @@ import { resetPluginTables } from '#tests/bootstrap'
 const ALICE = '76561198000000001'
 
 async function publishCatalog() {
-  const catalog = await readFile(new URL('../../fixtures/contract/catalog.v1.json', import.meta.url), 'utf8')
-  await db.connection('retake').rawQuery('INSERT INTO retake_catalog VALUES (?, 1, ?, UTC_TIMESTAMP(6))', ['default', catalog])
+  const catalog = await readFile(
+    new URL('../../fixtures/contract/catalog.v1.json', import.meta.url),
+    'utf8'
+  )
+  await db
+    .connection('retake')
+    .rawQuery('INSERT INTO retake_catalog VALUES (?, 1, ?, UTC_TIMESTAMP(6))', ['default', catalog])
 }
 
 async function savedPrimary(team: number, roundType: string) {
   const [rows] = await db
     .connection('retake')
-    .rawQuery('SELECT primary_weapon FROM player_loadout WHERE steam_id = ? AND team = ? AND round_type = ?', [ALICE, team, roundType])
+    .rawQuery(
+      'SELECT primary_weapon FROM player_loadout WHERE steam_id = ? AND team = ? AND round_type = ?',
+      [ALICE, team, roundType]
+    )
   return (rows as { primary_weapon: string | null }[])[0]?.primary_weapon ?? null
 }
 
@@ -49,7 +57,9 @@ test.group('Loadouts', (group) => {
     const player = await Player.create({ steamId: ALICE })
     const response = await client.get('/loadouts').loginAs(player).withInertia()
     response.assertInertiaComponent('loadouts/index')
-    response.assertInertiaPropsContains({ view: { status: 'ok', awp: { offered: true, optIn: false } } })
+    response.assertInertiaPropsContains({
+      view: { status: 'ok', awp: { offered: true, optIn: false } },
+    })
   })
 
   test('says when no catalog was published', async ({ client }) => {
@@ -139,22 +149,42 @@ test.group('Loadouts', (group) => {
   test('only writes for the logged in player', async ({ client, assert }) => {
     await publishCatalog()
     const player = await Player.create({ steamId: ALICE })
-    await client
-      .post('/loadouts/weapon')
-      .loginAs(player)
-      .withCsrfToken()
-      .json({ team: 'CT', roundType: 'FullBuy', slot: 'primary', weapon: 'weapon_aug', steamId: '76561198000000002' })
-    const [rows] = await db.connection('retake').rawQuery('SELECT CAST(steam_id AS CHAR) AS steam_id FROM player_loadout')
-    assert.deepEqual((rows as { steam_id: string }[]).map((r) => r.steam_id), [ALICE])
+    await client.post('/loadouts/weapon').loginAs(player).withCsrfToken().json({
+      team: 'CT',
+      roundType: 'FullBuy',
+      slot: 'primary',
+      weapon: 'weapon_aug',
+      steamId: '76561198000000002',
+    })
+    const [rows] = await db
+      .connection('retake')
+      .rawQuery('SELECT CAST(steam_id AS CHAR) AS steam_id FROM player_loadout')
+    assert.deepEqual(
+      (rows as { steam_id: string }[]).map((r) => r.steam_id),
+      [ALICE]
+    )
   })
 
   test('resets a round type and toggles the AWP', async ({ client, assert }) => {
     await publishCatalog()
     const player = await Player.create({ steamId: ALICE })
-    await client.post('/loadouts/weapon').loginAs(player).withCsrfToken().json({ team: 'T', roundType: 'FullBuy', slot: 'primary', weapon: 'weapon_sg556' })
-    await client.post('/loadouts/reset').loginAs(player).withCsrfToken().json({ team: 'T', roundType: 'FullBuy' })
+    await client
+      .post('/loadouts/weapon')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ team: 'T', roundType: 'FullBuy', slot: 'primary', weapon: 'weapon_sg556' })
+    await client
+      .post('/loadouts/reset')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ team: 'T', roundType: 'FullBuy' })
     assert.isNull(await savedPrimary(0, 'FullBuy'))
-    const awp = await client.post('/loadouts/awp').loginAs(player).withCsrfToken().json({ optIn: true }).redirects(0)
+    const awp = await client
+      .post('/loadouts/awp')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ optIn: true })
+      .redirects(0)
     awp.assertStatus(302)
   })
 
@@ -183,14 +213,24 @@ test.group('Loadouts', (group) => {
       .withCsrfToken()
       .json({ team: 'CT', roundType: 'FullBuy', slot: 'primary', weapon: 'weapon_aug' })
     weapon.assertStatus(503)
-    const awp = await client.post('/loadouts/awp').loginAs(player).withCsrfToken().json({ optIn: true })
+    const awp = await client
+      .post('/loadouts/awp')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ optIn: true })
     awp.assertStatus(503)
-    const reset = await client.post('/loadouts/reset').loginAs(player).withCsrfToken().json({ team: 'CT', roundType: 'FullBuy' })
+    const reset = await client
+      .post('/loadouts/reset')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ team: 'CT', roundType: 'FullBuy' })
     reset.assertStatus(503)
     assert.isNull(await savedPrimary(1, 'FullBuy'))
   })
 
-  test('redirects back with an error for an Inertia write when the retake database fails', async ({ client }) => {
+  test('redirects back with an error for an Inertia write when the retake database fails', async ({
+    client,
+  }) => {
     app.container.swap(LoadoutRepository, () => new FailingWritesRepository())
     const player = await Player.create({ steamId: ALICE })
     const response = await client
@@ -206,10 +246,20 @@ test.group('Loadouts', (group) => {
   test('limits writes to 30 per minute and per player', async ({ client }) => {
     const player = await Player.create({ steamId: '76561198000000099' })
     for (let i = 0; i < 30; i++) {
-      const ok = await client.post('/loadouts/reset').loginAs(player).withCsrfToken().json({ team: 'CT', roundType: 'FullBuy' }).redirects(0)
+      const ok = await client
+        .post('/loadouts/reset')
+        .loginAs(player)
+        .withCsrfToken()
+        .json({ team: 'CT', roundType: 'FullBuy' })
+        .redirects(0)
       ok.assertStatus(302)
     }
-    const limited = await client.post('/loadouts/reset').loginAs(player).withCsrfToken().json({ team: 'CT', roundType: 'FullBuy' }).redirects(0)
+    const limited = await client
+      .post('/loadouts/reset')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ team: 'CT', roundType: 'FullBuy' })
+      .redirects(0)
     limited.assertStatus(429)
   })
 })

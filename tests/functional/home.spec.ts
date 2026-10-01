@@ -19,13 +19,21 @@ test.group('Home', (group) => {
   })
 
   test('the locale cookie is honoured', async ({ client }) => {
-    const response = await client.post('/locale').withCsrfToken().form({ locale: 'fr' }).redirects(0)
+    const response = await client
+      .post('/locale')
+      .withCsrfToken()
+      .form({ locale: 'fr' })
+      .redirects(0)
     response.assertStatus(302)
     response.assertCookie('panel_locale', 'fr')
   })
 
   test('an unknown locale is rejected', async ({ client }) => {
-    const response = await client.post('/locale').withCsrfToken().form({ locale: 'de' }).redirects(0)
+    const response = await client
+      .post('/locale')
+      .withCsrfToken()
+      .form({ locale: 'de' })
+      .redirects(0)
     response.assertStatus(302)
     response.assertCookieMissing('panel_locale')
   })

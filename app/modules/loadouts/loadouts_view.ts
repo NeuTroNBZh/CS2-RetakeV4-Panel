@@ -1,4 +1,12 @@
-import { ANY_ROUND_TYPE, TEAMS, hasChoice, offersAwp, type CatalogResult, type Slot, type Team } from '#modules/loadouts/catalog'
+import {
+  ANY_ROUND_TYPE,
+  TEAMS,
+  hasChoice,
+  offersAwp,
+  type CatalogResult,
+  type Slot,
+  type Team,
+} from '#modules/loadouts/catalog'
 import type { PreferenceRow } from '#modules/loadouts/loadout_repository'
 import { weaponCategory, weaponLabel } from '#modules/loadouts/weapons'
 
@@ -29,7 +37,10 @@ function slotView(choices: string[], defaultId: string | null, saved: string | n
   }
 }
 
-export function buildLoadoutsView(result: CatalogResult, preferences: PreferenceRow[]): LoadoutsView {
+export function buildLoadoutsView(
+  result: CatalogResult,
+  preferences: PreferenceRow[]
+): LoadoutsView {
   const optIn = preferences.some((row) => row.roundType === ANY_ROUND_TYPE && row.awpOptIn)
   if (result.kind !== 'ok') {
     return {
@@ -50,14 +61,25 @@ export function buildLoadoutsView(result: CatalogResult, preferences: Preference
         const catalog = roundType.teams[team]
         return {
           name: roundType.name,
-          primary: slotView(catalog.primaries, catalog.defaultPrimary, saved(team, roundType.name, 'primary')),
-          secondary: slotView(catalog.secondaries, catalog.defaultSecondary, saved(team, roundType.name, 'secondary')),
+          primary: slotView(
+            catalog.primaries,
+            catalog.defaultPrimary,
+            saved(team, roundType.name, 'primary')
+          ),
+          secondary: slotView(
+            catalog.secondaries,
+            catalog.defaultSecondary,
+            saved(team, roundType.name, 'secondary')
+          ),
         }
       })
   return {
     status: 'ok',
     formatVersion: null,
     awp: { offered: offersAwp(result.catalog), optIn },
-    teams: Object.fromEntries(TEAMS.map((team) => [team, teamViews(team)])) as Record<Team, RoundTypeView[]>,
+    teams: Object.fromEntries(TEAMS.map((team) => [team, teamViews(team)])) as Record<
+      Team,
+      RoundTypeView[]
+    >,
   }
 }

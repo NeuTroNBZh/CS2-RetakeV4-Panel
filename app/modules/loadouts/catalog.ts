@@ -32,7 +32,8 @@ export type CatalogResult =
 const isStringList = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'string')
 
-const isNullableString = (value: unknown): value is string | null => value === null || typeof value === 'string'
+const isNullableString = (value: unknown): value is string | null =>
+  value === null || typeof value === 'string'
 
 function isTeamCatalog(value: unknown): value is TeamCatalog {
   const team = value as Partial<TeamCatalog> | null
@@ -59,7 +60,9 @@ function isRoundType(value: unknown): value is RoundTypeCatalog {
   )
 }
 
-export function readCatalog(row: { format_version: number; catalog: string } | null): CatalogResult {
+export function readCatalog(
+  row: { format_version: number; catalog: string } | null
+): CatalogResult {
   if (row === null) return { kind: 'missing' }
   if (Number(row.format_version) !== CATALOG_FORMAT_VERSION) {
     return { kind: 'unsupported', formatVersion: Number(row.format_version) }
@@ -75,7 +78,8 @@ export function readCatalog(row: { format_version: number; catalog: string } | n
   return { kind: 'ok', catalog: { roundTypes } }
 }
 
-const findRoundType = (catalog: Catalog, name: string) => catalog.roundTypes.find((roundType) => roundType.name === name)
+const findRoundType = (catalog: Catalog, name: string) =>
+  catalog.roundTypes.find((roundType) => roundType.name === name)
 
 export function options(catalog: Catalog, roundType: string, team: Team, slot: Slot): string[] {
   const teamCatalog = findRoundType(catalog, roundType)?.teams[team]
@@ -88,8 +92,13 @@ export function hasChoice(roundType: RoundTypeCatalog, team: Team): boolean {
   return teamCatalog.primaries.length > 1 || teamCatalog.secondaries.length > 1
 }
 
-export function isAllowed(catalog: Catalog, selection: { roundType: string; team: Team; slot: Slot; weapon: string }): boolean {
-  return options(catalog, selection.roundType, selection.team, selection.slot).includes(selection.weapon)
+export function isAllowed(
+  catalog: Catalog,
+  selection: { roundType: string; team: Team; slot: Slot; weapon: string }
+): boolean {
+  return options(catalog, selection.roundType, selection.team, selection.slot).includes(
+    selection.weapon
+  )
 }
 
 export function offersAwp(catalog: Catalog): boolean {

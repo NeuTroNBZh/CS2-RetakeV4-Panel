@@ -11,7 +11,8 @@ import {
   type Catalog,
 } from '#modules/loadouts/catalog'
 
-const fixture = async (name: string) => readFile(new URL(`../../fixtures/contract/${name}`, import.meta.url), 'utf8')
+const fixture = async (name: string) =>
+  readFile(new URL(`../../fixtures/contract/${name}`, import.meta.url), 'utf8')
 
 async function contractCatalog(): Promise<Catalog> {
   const result = readCatalog({ format_version: 1, catalog: await fixture('catalog.v1.json') })
@@ -22,7 +23,10 @@ async function contractCatalog(): Promise<Catalog> {
 test.group('readCatalog', () => {
   test('reads the contract fixture', async ({ assert }) => {
     const catalog = await contractCatalog()
-    assert.deepEqual(catalog.roundTypes.map((r) => r.name), ['Pistol', 'FullBuy'])
+    assert.deepEqual(
+      catalog.roundTypes.map((r) => r.name),
+      ['Pistol', 'FullBuy']
+    )
   })
 
   test('missing row', ({ assert }) => {
@@ -30,7 +34,10 @@ test.group('readCatalog', () => {
   })
 
   test('unsupported version', ({ assert }) => {
-    assert.deepEqual(readCatalog({ format_version: 2, catalog: '{"roundTypes":[]}' }), { kind: 'unsupported', formatVersion: 2 })
+    assert.deepEqual(readCatalog({ format_version: 2, catalog: '{"roundTypes":[]}' }), {
+      kind: 'unsupported',
+      formatVersion: 2,
+    })
   })
 
   test('invalid JSON', ({ assert }) => {
@@ -38,7 +45,9 @@ test.group('readCatalog', () => {
   })
 
   test('wrong shape', ({ assert }) => {
-    assert.deepEqual(readCatalog({ format_version: 1, catalog: '{"roundTypes":[{"name":"X"}]}' }), { kind: 'invalid' })
+    assert.deepEqual(readCatalog({ format_version: 1, catalog: '{"roundTypes":[{"name":"X"}]}' }), {
+      kind: 'invalid',
+    })
     assert.deepEqual(readCatalog({ format_version: 1, catalog: '[]' }), { kind: 'invalid' })
   })
 })
@@ -46,22 +55,45 @@ test.group('readCatalog', () => {
 test.group('catalog rules', () => {
   test('options per round type, team and slot', async ({ assert }) => {
     const catalog = await contractCatalog()
-    assert.deepEqual(options(catalog, 'FullBuy', 'CT', 'primary'), ['weapon_m4a1_silencer', 'weapon_aug'])
+    assert.deepEqual(options(catalog, 'FullBuy', 'CT', 'primary'), [
+      'weapon_m4a1_silencer',
+      'weapon_aug',
+    ])
     assert.deepEqual(options(catalog, 'Pistol', 'T', 'primary'), [])
     assert.deepEqual(options(catalog, 'Unknown', 'T', 'primary'), [])
   })
 
-  test('a round type has a choice when one slot offers more than one weapon', async ({ assert }) => {
+  test('a round type has a choice when one slot offers more than one weapon', async ({
+    assert,
+  }) => {
     const catalog = await contractCatalog()
     assert.isTrue(hasChoice(catalog.roundTypes[0], 'T'))
   })
 
   test('only catalog weapons are allowed', async ({ assert }) => {
     const catalog = await contractCatalog()
-    assert.isTrue(isAllowed(catalog, { roundType: 'FullBuy', team: 'T', slot: 'primary', weapon: 'weapon_sg556' }))
-    assert.isFalse(isAllowed(catalog, { roundType: 'FullBuy', team: 'T', slot: 'primary', weapon: 'weapon_awp' }))
-    assert.isFalse(isAllowed(catalog, { roundType: 'FullBuy', team: 'T', slot: 'primary', weapon: 'weapon_m4a1_silencer' }))
-    assert.isFalse(isAllowed(catalog, { roundType: 'Nope', team: 'T', slot: 'primary', weapon: 'weapon_ak47' }))
+    assert.isTrue(
+      isAllowed(catalog, {
+        roundType: 'FullBuy',
+        team: 'T',
+        slot: 'primary',
+        weapon: 'weapon_sg556',
+      })
+    )
+    assert.isFalse(
+      isAllowed(catalog, { roundType: 'FullBuy', team: 'T', slot: 'primary', weapon: 'weapon_awp' })
+    )
+    assert.isFalse(
+      isAllowed(catalog, {
+        roundType: 'FullBuy',
+        team: 'T',
+        slot: 'primary',
+        weapon: 'weapon_m4a1_silencer',
+      })
+    )
+    assert.isFalse(
+      isAllowed(catalog, { roundType: 'Nope', team: 'T', slot: 'primary', weapon: 'weapon_ak47' })
+    )
   })
 
   test('the AWP toggle shows when a round type hands it out', async ({ assert }) => {

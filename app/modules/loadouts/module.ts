@@ -13,9 +13,18 @@ export const loadoutsModule: PanelModule = {
     router
       .group(() => {
         router.get('/loadouts', [LoadoutsController, 'show']).as('loadouts.show')
-        router.post('/loadouts/weapon', [LoadoutsController, 'updateWeapon']).as('loadouts.weapon').use(writeThrottle)
-        router.post('/loadouts/reset', [LoadoutsController, 'reset']).as('loadouts.reset').use(writeThrottle)
-        router.post('/loadouts/awp', [LoadoutsController, 'updateAwp']).as('loadouts.awp').use(writeThrottle)
+        router
+          .post('/loadouts/weapon', [LoadoutsController, 'updateWeapon'])
+          .as('loadouts.weapon')
+          .use(writeThrottle)
+        router
+          .post('/loadouts/reset', [LoadoutsController, 'reset'])
+          .as('loadouts.reset')
+          .use(writeThrottle)
+        router
+          .post('/loadouts/awp', [LoadoutsController, 'updateAwp'])
+          .as('loadouts.awp')
+          .use(writeThrottle)
       })
       .use(middleware.auth({ guards: ['web'] }))
   },
