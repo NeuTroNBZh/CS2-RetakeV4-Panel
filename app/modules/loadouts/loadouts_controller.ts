@@ -92,7 +92,7 @@ export default class LoadoutsController {
   }
 
   async updateAwp(ctx: HttpContext) {
-    const { optIn } = await ctx.request.validateUsing(awpValidator)
-    return this.guarded(ctx, () => this.repository.setAwp(ctx.auth.user!.steamId, optIn))
+    const { team, optIn } = await ctx.request.validateUsing(awpValidator)
+    return this.guarded(ctx, () => this.repository.setAwp(ctx.auth.user!.steamId, team, optIn))
   }
 }

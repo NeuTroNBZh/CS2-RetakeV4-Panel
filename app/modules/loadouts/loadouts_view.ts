@@ -25,7 +25,7 @@ export interface RoundTypeView {
 export interface LoadoutsView {
   status: 'ok' | 'missing' | 'unsupported' | 'invalid'
   formatVersion: number | null
-  awp: { offered: boolean; optIn: boolean }
+  awp: Record<Team, AwpView>
   teams: Record<Team, RoundTypeView[]>
 }
 
@@ -37,16 +37,26 @@ function slotView(choices: string[], defaultId: string | null, saved: string | n
   }
 }
 
+export interface AwpView {
+  offered: boolean
+  optIn: boolean
+}
+
 export function buildLoadoutsView(
   result: CatalogResult,
   preferences: PreferenceRow[]
 ): LoadoutsView {
-  const optIn = preferences.some((row) => row.roundType === ANY_ROUND_TYPE && row.awpOptIn)
+  const optIn = (team: Team) =>
+    preferences.some((row) => row.team === team && row.roundType === ANY_ROUND_TYPE && row.awpOptIn)
+  const awp = (offered: (team: Team) => boolean) =>
+    Object.fromEntries(
+      TEAMS.map((team) => [team, { offered: offered(team), optIn: optIn(team) }])
+    ) as Record<Team, AwpView>
   if (result.kind !== 'ok') {
     return {
       status: result.kind,
       formatVersion: result.kind === 'unsupported' ? result.formatVersion : null,
-      awp: { offered: false, optIn },
+      awp: awp(() => false),
       teams: { T: [], CT: [] },
     }
   }
@@ -76,7 +86,7 @@ export function buildLoadoutsView(
   return {
     status: 'ok',
     formatVersion: null,
-    awp: { offered: offersAwp(result.catalog), optIn },
+    awp: awp((team) => offersAwp(result.catalog, team)),
     teams: Object.fromEntries(TEAMS.map((team) => [team, teamViews(team)])) as Record<
       Team,
       RoundTypeView[]

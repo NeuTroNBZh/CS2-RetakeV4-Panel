@@ -96,9 +96,21 @@ test.group('catalog rules', () => {
     )
   })
 
-  test('the AWP toggle shows when a round type hands it out', async ({ assert }) => {
-    assert.isTrue(offersAwp(await contractCatalog()))
-    assert.isFalse(offersAwp({ roundTypes: [] }))
+  test('the AWP toggle of a team shows when one of its round types hands it out', async ({
+    assert,
+  }) => {
+    const catalog = await contractCatalog()
+    assert.isTrue(offersAwp(catalog, 'T'))
+    assert.isTrue(offersAwp(catalog, 'CT'))
+    assert.isFalse(offersAwp({ roundTypes: [] }, 'T'))
+    const ctOnly = {
+      roundTypes: catalog.roundTypes.map((rt) => ({
+        ...rt,
+        teams: { ...rt.teams, T: { ...rt.teams.T, awp: false } },
+      })),
+    }
+    assert.isFalse(offersAwp(ctOnly, 'T'))
+    assert.isTrue(offersAwp(ctOnly, 'CT'))
   })
 })
 
