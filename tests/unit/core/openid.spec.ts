@@ -89,4 +89,29 @@ test.group('Steam OpenID', () => {
     }
     assert.isNull(await verifyAssertion(assertion(), RETURN_TO, failing))
   })
+  test('reports why an assertion was rejected', async ({ assert }) => {
+    const reasons: string[] = []
+    const onError = (reason: string) => reasons.push(reason)
+    const failing = async () => {
+      throw new Error('network down')
+    }
+    await verifyAssertion(assertion(), RETURN_TO, failing, onError)
+    await verifyAssertion(assertion(), RETURN_TO, invalid, onError)
+    await verifyAssertion(
+      assertion({ 'openid.return_to': 'https://evil.example.com/cb' }),
+      RETURN_TO,
+      valid,
+      onError
+    )
+    assert.lengthOf(reasons, 3)
+    assert.include(reasons[0], 'network down')
+    assert.include(reasons[1], 'is_valid')
+    assert.include(reasons[2], 'return_to')
+  })
+
+  test('does not report a successful verification', async ({ assert }) => {
+    const reasons: string[] = []
+    await verifyAssertion(assertion(), RETURN_TO, valid, (reason) => reasons.push(reason))
+    assert.lengthOf(reasons, 0)
+  })
 })

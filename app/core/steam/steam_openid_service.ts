@@ -1,3 +1,4 @@
+import logger from '@adonisjs/core/services/logger'
 import env from '#start/env'
 import { buildLoginUrl, STEAM_OPENID_ENDPOINT, verifyAssertion } from '#core/steam/openid'
 
@@ -11,13 +12,21 @@ export class SteamOpenId {
   }
 
   async verify(query: Record<string, unknown>): Promise<string | null> {
-    return verifyAssertion(query, this.callbackUrl(), async (body) => {
-      const response = await fetch(STEAM_OPENID_ENDPOINT, {
-        method: 'POST',
-        body,
-        signal: AbortSignal.timeout(10000),
-      })
-      return response.text()
-    })
+    return verifyAssertion(
+      query,
+      this.callbackUrl(),
+      async (body) => {
+        const response = await fetch(STEAM_OPENID_ENDPOINT, {
+          method: 'POST',
+          body,
+          signal: AbortSignal.timeout(10000),
+        })
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+        return response.text()
+      },
+      (reason) => logger.warn({ reason }, 'Steam login rejected')
+    )
   }
 }

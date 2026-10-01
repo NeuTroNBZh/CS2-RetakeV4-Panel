@@ -16,6 +16,10 @@ export function buildLoginUrl(returnTo: string, realm: string): string {
   return `${STEAM_OPENID_ENDPOINT}?${params.toString()}`
 }
 
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
 function text(query: Record<string, unknown>, key: string): string | null {
   const value = query[key]
   return typeof value === 'string' ? value : null
@@ -24,13 +28,22 @@ function text(query: Record<string, unknown>, key: string): string | null {
 export async function verifyAssertion(
   query: Record<string, unknown>,
   expectedReturnTo: string,
-  checkAuthentication: (body: URLSearchParams) => Promise<string>
+  checkAuthentication: (body: URLSearchParams) => Promise<string>,
+  onError: (reason: string) => void = () => {}
 ): Promise<string | null> {
-  if (text(query, 'openid.mode') !== 'id_res') return null
-  if (text(query, 'openid.op_endpoint') !== STEAM_OPENID_ENDPOINT) return null
-  if (text(query, 'openid.return_to') !== expectedReturnTo) return null
+  const reject = (reason: string): null => {
+    onError(reason)
+    return null
+  }
+  if (text(query, 'openid.mode') !== 'id_res') return reject('openid.mode is not id_res')
+  if (text(query, 'openid.op_endpoint') !== STEAM_OPENID_ENDPOINT) {
+    return reject('openid.op_endpoint is not Steam')
+  }
+  if (text(query, 'openid.return_to') !== expectedReturnTo) {
+    return reject('openid.return_to does not match the callback url')
+  }
   const steamId = CLAIMED_ID.exec(text(query, 'openid.claimed_id') ?? '')?.[1]
-  if (!steamId) return null
+  if (!steamId) return reject('openid.claimed_id is not a Steam identity')
 
   const body = new URLSearchParams()
   for (const [key, value] of Object.entries(query)) {
@@ -41,8 +54,9 @@ export async function verifyAssertion(
   body.set('openid.mode', 'check_authentication')
   try {
     const answer = await checkAuthentication(body)
-    return answer.split('\n').some((line) => line.trim() === 'is_valid:true') ? steamId : null
-  } catch {
-    return null
+    if (answer.split('\n').some((line) => line.trim() === 'is_valid:true')) return steamId
+    return reject('Steam answered is_valid:false')
+  } catch (error) {
+    return reject(`Steam check_authentication failed: ${errorMessage(error)}`)
   }
 }
