@@ -42,6 +42,12 @@ async function startTestDatabase(): Promise<Awaited<ReturnType<typeof createDB>>
 
 const testDatabase = await startTestDatabase()
 
+let stopPromise: Promise<void> | null = null
+function stopTestDatabase(): Promise<void> {
+  stopPromise ??= testDatabase ? testDatabase.stop() : Promise.resolve()
+  return stopPromise
+}
+
 /**
  * URL to the application root. AdonisJS need it to resolve
  * paths to file and directories for scaffolding commands
@@ -79,7 +85,7 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
         setup: runnerHooks.setup,
         teardown: runnerHooks.teardown.concat([
           () => app.terminate(),
-          () => testDatabase?.stop(),
+          () => stopTestDatabase(),
         ]),
       },
     })
@@ -88,4 +94,8 @@ new Ignitor(APP_ROOT, { importer: IMPORTER })
   .catch((error) => {
     process.exitCode = 1
     prettyPrintError(error)
+  })
+  .finally(async () => {
+    await stopTestDatabase()
+    process.exit()
   })
