@@ -16,6 +16,28 @@ export default class LoadoutsController {
     return env.get('PANEL_RETAKE_SERVER', 'default')
   }
 
+  /**
+   * Runs a repository write. A retake database failure is isolated to this module: Inertia gets a flash error
+   * and a redirect back, other clients a 503.
+   */
+  private async guarded(
+    { request, response, session, logger }: HttpContext,
+    action: () => Promise<unknown>
+  ) {
+    try {
+      await action()
+    } catch (error) {
+      logger.error({ err: error }, 'loadouts: retake database unavailable')
+      if (request.header('x-inertia')) {
+        session.flash('error', 'loadouts.unavailable')
+        return response.redirect().back()
+      }
+      return response.status(SERVICE_UNAVAILABLE).send({ errors: [{ message: 'loadouts.unavailable' }] })
+    }
+    session.flash('success', 'loadouts.saved')
+    return response.redirect().back()
+  }
+
   async show({ inertia, auth, response, logger }: HttpContext) {
     try {
       const [row, preferences] = await Promise.all([
@@ -30,9 +52,15 @@ export default class LoadoutsController {
     }
   }
 
-  async updateWeapon({ request, response, auth, session }: HttpContext) {
+  async updateWeapon(ctx: HttpContext) {
+    const { request, response, auth, session } = ctx
     const selection = await request.validateUsing(weaponValidator)
-    const result = readCatalog(await this.repository.catalogRow(this.serverKey()))
+    let result
+    try {
+      result = readCatalog(await this.repository.catalogRow(this.serverKey()))
+    } catch (error) {
+      return this.guarded(ctx, () => Promise.reject(error))
+    }
     if (result.kind !== 'ok' || !isAllowed(result.catalog, selection)) {
       // The catalog may have been republished since the page was shown: Inertia gets a flash, API clients a 422.
       if (request.header('x-inertia')) {
@@ -41,22 +69,18 @@ export default class LoadoutsController {
       }
       return response.unprocessableEntity({ errors: [{ field: 'weapon', message: 'loadouts.not_allowed' }] })
     }
-    await this.repository.setWeapon(auth.user!.steamId, selection.team, selection.roundType, selection.slot, selection.weapon)
-    session.flash('success', 'loadouts.saved')
-    return response.redirect().back()
+    return this.guarded(ctx, () =>
+      this.repository.setWeapon(auth.user!.steamId, selection.team, selection.roundType, selection.slot, selection.weapon)
+    )
   }
 
-  async reset({ request, response, auth, session }: HttpContext) {
-    const { team, roundType } = await request.validateUsing(resetValidator)
-    await this.repository.reset(auth.user!.steamId, team, roundType)
-    session.flash('success', 'loadouts.saved')
-    return response.redirect().back()
+  async reset(ctx: HttpContext) {
+    const { team, roundType } = await ctx.request.validateUsing(resetValidator)
+    return this.guarded(ctx, () => this.repository.reset(ctx.auth.user!.steamId, team, roundType))
   }
 
-  async updateAwp({ request, response, auth, session }: HttpContext) {
-    const { optIn } = await request.validateUsing(awpValidator)
-    await this.repository.setAwp(auth.user!.steamId, optIn)
-    session.flash('success', 'loadouts.saved')
-    return response.redirect().back()
+  async updateAwp(ctx: HttpContext) {
+    const { optIn } = await ctx.request.validateUsing(awpValidator)
+    return this.guarded(ctx, () => this.repository.setAwp(ctx.auth.user!.steamId, optIn))
   }
 }

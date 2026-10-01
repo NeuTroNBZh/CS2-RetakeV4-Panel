@@ -21,6 +21,18 @@ async function savedPrimary(team: number, roundType: string) {
   return (rows as { primary_weapon: string | null }[])[0]?.primary_weapon ?? null
 }
 
+class FailingWritesRepository extends LoadoutRepository {
+  async catalogRow(): Promise<never> {
+    throw new Error('connection refused')
+  }
+  async reset(): Promise<never> {
+    throw new Error('connection refused')
+  }
+  async setAwp(): Promise<never> {
+    throw new Error('connection refused')
+  }
+}
+
 test.group('Loadouts', (group) => {
   group.each.setup(() => testUtils.db('panel').withGlobalTransaction())
   group.each.setup(() => resetPluginTables())
@@ -159,5 +171,45 @@ test.group('Loadouts', (group) => {
     response.assertInertiaComponent('loadouts/unavailable')
     const home = await client.get('/').loginAs(player).withInertia()
     home.assertStatus(200)
+  })
+
+  test('answers 503 to a write when the retake database fails', async ({ client, assert }) => {
+    await publishCatalog()
+    app.container.swap(LoadoutRepository, () => new FailingWritesRepository())
+    const player = await Player.create({ steamId: ALICE })
+    const weapon = await client
+      .post('/loadouts/weapon')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ team: 'CT', roundType: 'FullBuy', slot: 'primary', weapon: 'weapon_aug' })
+    weapon.assertStatus(503)
+    const awp = await client.post('/loadouts/awp').loginAs(player).withCsrfToken().json({ optIn: true })
+    awp.assertStatus(503)
+    const reset = await client.post('/loadouts/reset').loginAs(player).withCsrfToken().json({ team: 'CT', roundType: 'FullBuy' })
+    reset.assertStatus(503)
+    assert.isNull(await savedPrimary(1, 'FullBuy'))
+  })
+
+  test('redirects back with an error for an Inertia write when the retake database fails', async ({ client }) => {
+    app.container.swap(LoadoutRepository, () => new FailingWritesRepository())
+    const player = await Player.create({ steamId: ALICE })
+    const response = await client
+      .post('/loadouts/awp')
+      .loginAs(player)
+      .withCsrfToken()
+      .header('x-inertia', 'true')
+      .json({ optIn: true })
+      .redirects(0)
+    response.assertStatus(302)
+  })
+
+  test('limits writes to 30 per minute and per player', async ({ client }) => {
+    const player = await Player.create({ steamId: '76561198000000099' })
+    for (let i = 0; i < 30; i++) {
+      const ok = await client.post('/loadouts/reset').loginAs(player).withCsrfToken().json({ team: 'CT', roundType: 'FullBuy' }).redirects(0)
+      ok.assertStatus(302)
+    }
+    const limited = await client.post('/loadouts/reset').loginAs(player).withCsrfToken().json({ team: 'CT', roundType: 'FullBuy' }).redirects(0)
+    limited.assertStatus(429)
   })
 })
