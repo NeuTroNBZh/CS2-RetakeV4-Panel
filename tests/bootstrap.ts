@@ -9,6 +9,8 @@ import { authApiClient } from '@adonisjs/auth/plugins/api_client'
 import { inertiaApiClient } from '@adonisjs/inertia/plugins/api_client'
 import { dbAssertions } from '@adonisjs/lucid/plugins/db'
 import testUtils from '@adonisjs/core/services/test_utils'
+import { readFile } from 'node:fs/promises'
+import db from '@adonisjs/lucid/services/db'
 
 /**
  * This file is imported by the "bin/test.ts" entrypoint file
@@ -29,6 +31,21 @@ export const plugins: Config['plugins'] = [
   inertiaApiClient(app),
 ]
 
+async function createPluginTables() {
+  const sql = await readFile(new URL('./fixtures/plugin_schema.sql', import.meta.url), 'utf8')
+  for (const statement of sql
+    .split(';')
+    .map((s) => s.trim())
+    .filter(Boolean)) {
+    await db.connection('retake').rawQuery(statement)
+  }
+}
+
+export async function resetPluginTables() {
+  await db.connection('retake').rawQuery('DELETE FROM player_loadout')
+  await db.connection('retake').rawQuery('DELETE FROM retake_catalog')
+}
+
 /**
  * Configure lifecycle function to run before and after all the
  * tests.
@@ -37,7 +54,7 @@ export const plugins: Config['plugins'] = [
  * The teardown functions are executed after all the tests
  */
 export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
-  setup: [() => testUtils.db('panel').migrate()],
+  setup: [() => testUtils.db('panel').migrate(), () => createPluginTables()],
   teardown: [],
 }
 
