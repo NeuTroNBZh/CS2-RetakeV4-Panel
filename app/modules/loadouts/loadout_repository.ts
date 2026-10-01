@@ -1,5 +1,5 @@
 import db from '@adonisjs/lucid/services/db'
-import { ANY_ROUND_TYPE, TEAMS, TEAM_VALUE, type Slot, type Team } from '#modules/loadouts/catalog'
+import { ANY_ROUND_TYPE, TEAM_VALUE, type Slot, type Team } from '#modules/loadouts/catalog'
 
 export interface PreferenceRow {
   team: Team
@@ -71,16 +71,13 @@ export class LoadoutRepository {
     )
   }
 
-  async setAwp(steamId: string, optIn: boolean): Promise<void> {
-    await this.connection.transaction(async (trx) => {
-      for (const team of TEAMS) {
-        await trx.rawQuery(
-          `INSERT INTO player_loadout (steam_id, team, round_type, awp_opt_in, updated_at)
-           VALUES (?, ?, ?, ?, UTC_TIMESTAMP(6))
-           ON DUPLICATE KEY UPDATE awp_opt_in = VALUES(awp_opt_in), updated_at = VALUES(updated_at)`,
-          [steamId, TEAM_VALUE[team], ANY_ROUND_TYPE, optIn ? 1 : 0]
-        )
-      }
-    })
+  // Same encoding as the plugin: the AWP volunteering of a team is the awp_opt_in of its * row.
+  async setAwp(steamId: string, team: Team, optIn: boolean): Promise<void> {
+    await this.connection.rawQuery(
+      `INSERT INTO player_loadout (steam_id, team, round_type, awp_opt_in, updated_at)
+       VALUES (?, ?, ?, ?, UTC_TIMESTAMP(6))
+       ON DUPLICATE KEY UPDATE awp_opt_in = VALUES(awp_opt_in), updated_at = VALUES(updated_at)`,
+      [steamId, TEAM_VALUE[team], ANY_ROUND_TYPE, optIn ? 1 : 0]
+    )
   }
 }

@@ -18,7 +18,7 @@ const props = defineProps<{
   view: {
     status: 'ok' | 'missing' | 'unsupported' | 'invalid'
     formatVersion: number | null
-    awp: { offered: boolean; optIn: boolean }
+    awp: Record<Team, { offered: boolean; optIn: boolean }>
     teams: Record<Team, RoundTypeView[]>
   }
 }>()
@@ -33,7 +33,8 @@ const post = (url: string, data: Record<string, string | number | boolean>) =>
 const choose = (roundType: string, slot: Slot, weapon: string) =>
   post('/loadouts/weapon', { team: team.value, roundType, slot, weapon })
 const reset = (roundType: string) => post('/loadouts/reset', { team: team.value, roundType })
-const toggleAwp = () => post('/loadouts/awp', { optIn: !props.view.awp.optIn })
+const toggleAwp = () =>
+  post('/loadouts/awp', { team: team.value, optIn: !props.view.awp[team.value].optIn })
 const isShown = (slot: SlotView, id: string) => (slot.selected ?? slot.defaultId) === id
 </script>
 
@@ -50,12 +51,6 @@ const isShown = (slot: SlotView, id: string) => (slot.selected ?? slot.defaultId
     </p>
 
     <template v-else>
-      <label v-if="props.view.awp.offered" class="awp-toggle">
-        <input type="checkbox" :checked="props.view.awp.optIn" @change="toggleAwp" />
-        {{ t('loadouts.awp') }}
-        <small>{{ t('loadouts.awp.help') }}</small>
-      </label>
-
       <div class="tabs" role="tablist">
         <button
           v-for="side in ['T', 'CT'] as const"
@@ -68,6 +63,12 @@ const isShown = (slot: SlotView, id: string) => (slot.selected ?? slot.defaultId
           {{ t(`loadouts.team.${side}`) }}
         </button>
       </div>
+
+      <label v-if="props.view.awp[team].offered" class="awp-toggle">
+        <input type="checkbox" :checked="props.view.awp[team].optIn" @change="toggleAwp" />
+        {{ t('loadouts.awp') }}
+        <small>{{ t('loadouts.awp.help') }}</small>
+      </label>
 
       <p v-if="props.view.teams[team].length === 0">{{ t('loadouts.no_choice') }}</p>
       <section v-for="roundType in props.view.teams[team]" :key="roundType.name" class="round-type">

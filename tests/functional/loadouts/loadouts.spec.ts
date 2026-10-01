@@ -58,7 +58,10 @@ test.group('Loadouts', (group) => {
     const response = await client.get('/loadouts').loginAs(player).withInertia()
     response.assertInertiaComponent('loadouts/index')
     response.assertInertiaPropsContains({
-      view: { status: 'ok', awp: { offered: true, optIn: false } },
+      view: {
+        status: 'ok',
+        awp: { T: { offered: true, optIn: false }, CT: { offered: true, optIn: false } },
+      },
     })
   })
 
@@ -183,9 +186,30 @@ test.group('Loadouts', (group) => {
       .post('/loadouts/awp')
       .loginAs(player)
       .withCsrfToken()
-      .json({ optIn: true })
+      .json({ team: 'CT', optIn: true })
       .redirects(0)
     awp.assertStatus(302)
+    const [rows] = await db
+      .connection('retake')
+      .rawQuery(
+        "SELECT team, awp_opt_in FROM player_loadout WHERE steam_id = ? AND round_type = '*'",
+        [ALICE]
+      )
+    assert.deepEqual(
+      (rows as { team: number; awp_opt_in: number }[]).map((r) => [r.team, r.awp_opt_in]),
+      [[1, 1]]
+    )
+  })
+
+  test('rejects an AWP toggle without a team', async ({ client }) => {
+    const player = await Player.create({ steamId: ALICE })
+    const response = await client
+      .post('/loadouts/awp')
+      .loginAs(player)
+      .withCsrfToken()
+      .json({ optIn: true })
+      .accept('json')
+    response.assertStatus(422)
   })
 
   test('shows the module error when the retake database fails', async ({ client }) => {
@@ -217,7 +241,7 @@ test.group('Loadouts', (group) => {
       .post('/loadouts/awp')
       .loginAs(player)
       .withCsrfToken()
-      .json({ optIn: true })
+      .json({ team: 'CT', optIn: true })
     awp.assertStatus(503)
     const reset = await client
       .post('/loadouts/reset')
@@ -238,7 +262,7 @@ test.group('Loadouts', (group) => {
       .loginAs(player)
       .withCsrfToken()
       .header('x-inertia', 'true')
-      .json({ optIn: true })
+      .json({ team: 'CT', optIn: true })
       .redirects(0)
     response.assertStatus(302)
   })

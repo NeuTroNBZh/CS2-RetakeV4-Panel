@@ -12,4 +12,4 @@ export const weaponValidator = vine.create({
 
 export const resetValidator = vine.create({ team, roundType })
 
-export const awpValidator = vine.create({ optIn: vine.boolean() })
+export const awpValidator = vine.create({ team, optIn: vine.boolean() })

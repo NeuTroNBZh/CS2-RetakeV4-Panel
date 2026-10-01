@@ -54,21 +54,23 @@ test.group('LoadoutRepository', (group) => {
     assert.isNull(row.secondary_weapon)
   })
 
-  test('setAwp writes the * row of both teams and keeps weapons', async ({ assert }) => {
-    await repository.setAwp(ALICE, true)
-    const all = await rows(ALICE)
+  // The AWP is volunteered per team (same encoding as the plugin: the * row of that team).
+  test('setAwp writes the * row of one team only', async ({ assert }) => {
+    await repository.setAwp(ALICE, 'CT', true)
+    const first = await rows(ALICE)
     assert.deepEqual(
-      all.map((r) => [r.team, r.round_type, r.awp_opt_in]),
-      [
-        [0, '*', 1],
-        [1, '*', 1],
-      ]
+      first.map((r) => [r.team, r.round_type, r.awp_opt_in]),
+      [[1, '*', 1]]
     )
-    await repository.setAwp(ALICE, false)
-    const afterReset = await rows(ALICE)
+    await repository.setAwp(ALICE, 'T', true)
+    await repository.setAwp(ALICE, 'CT', false)
+    const both = await rows(ALICE)
     assert.deepEqual(
-      afterReset.map((r) => r.awp_opt_in),
-      [0, 0]
+      both.map((r) => [r.team, r.awp_opt_in]),
+      [
+        [0, 1],
+        [1, 0],
+      ]
     )
   })
 

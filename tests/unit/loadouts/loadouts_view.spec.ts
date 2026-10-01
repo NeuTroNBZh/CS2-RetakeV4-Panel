@@ -35,7 +35,10 @@ test.group('buildLoadoutsView', () => {
     ])
     assert.equal(view.teams.CT[1].primary.selected, 'weapon_aug')
     assert.isNull(view.teams.CT[1].secondary.selected)
-    assert.deepEqual(view.awp, { offered: true, optIn: true })
+    assert.deepEqual(view.awp, {
+      T: { offered: true, optIn: true },
+      CT: { offered: true, optIn: false },
+    })
   })
 
   test('a saved weapon no longer offered is not shown as selected', async ({ assert }) => {

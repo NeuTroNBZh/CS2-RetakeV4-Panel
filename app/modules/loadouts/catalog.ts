@@ -101,6 +101,7 @@ export function isAllowed(
   )
 }
 
-export function offersAwp(catalog: Catalog): boolean {
-  return catalog.roundTypes.some((roundType) => TEAMS.some((team) => roundType.teams[team].awp))
+// The AWP is volunteered per team: the toggle of a team shows when one of its round types hands it out.
+export function offersAwp(catalog: Catalog, team: Team): boolean {
+  return catalog.roundTypes.some((roundType) => roundType.teams[team].awp)
 }
