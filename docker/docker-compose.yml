@@ -1,0 +1,19 @@
+# Start MySQL first: the panel probes its databases once at boot, and a module
+# whose database is down stays disabled until the panel container restarts.
+services:
+  panel:
+    image: ghcr.io/neutronbzh/cs2-retakev4-panel:latest
+    env_file: .env
+    restart: unless-stopped
+  caddy:
+    image: caddy:2
+    ports: ['80:80', '443:443']
+    environment:
+      PANEL_DOMAIN: ${PANEL_DOMAIN:?set PANEL_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [panel]
+    restart: unless-stopped
+volumes:
+  caddy_data:

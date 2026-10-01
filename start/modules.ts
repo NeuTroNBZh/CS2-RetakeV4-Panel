@@ -9,18 +9,25 @@ const CONNECTION_TIMEOUT_MS = 5000
 
 async function isReachable(name: string): Promise<boolean> {
   const probe = db.connection(name).rawQuery('SELECT 1')
-  const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), CONNECTION_TIMEOUT_MS))
+  let timer: NodeJS.Timeout | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error('timeout')), CONNECTION_TIMEOUT_MS)
+  })
   try {
     await Promise.race([probe, timeout])
     return true
   } catch (error) {
     logger.warn({ err: error, connection: name }, 'database connection %s is not reachable', name)
     return false
+  } finally {
+    clearTimeout(timer)
   }
 }
 
 const configured = Object.keys(dbConfig.connections)
-const reachable = await Promise.all(configured.map(async (name) => ((await isReachable(name)) ? name : null)))
+const reachable = await Promise.all(
+  configured.map(async (name) => ((await isReachable(name)) ? name : null))
+)
 const resolution = resolveModules(
   parseModuleList(env.get('PANEL_MODULES'), ['loadouts']),
   availableModules,

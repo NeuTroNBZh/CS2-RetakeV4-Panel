@@ -14,7 +14,9 @@ import { loginThrottle } from '#start/limiter'
 const AuthController = () => import('#controllers/auth_controller')
 const HomeController = () => import('#controllers/home_controller')
 const LocaleController = () => import('#controllers/locale_controller')
+const HealthController = () => import('#controllers/health_controller')
 
+router.get('/health', [HealthController, 'show']).as('health')
 router.get('/', [HomeController, 'show']).as('home')
 router.post('/locale', [LocaleController, 'update']).as('locale.update')
 

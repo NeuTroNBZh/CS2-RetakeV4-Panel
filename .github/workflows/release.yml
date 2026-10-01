@@ -1,0 +1,34 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+  packages: write
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/neutronbzh/cs2-retakev4-panel:${{ github.ref_name }}
+            ghcr.io/neutronbzh/cs2-retakev4-panel:latest
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            docker/docker-compose.yml
+            docker/Caddyfile
+            docker/mysql-user.sql
+            .env.example

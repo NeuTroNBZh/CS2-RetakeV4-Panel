@@ -1,0 +1,22 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # .adonisjs/ is gitignored; NODE_ENV=test loads the committed .env.test
+      - run: node ace codegen
+        env:
+          NODE_ENV: test
+      - run: npm run lint
+      - run: npm run typecheck
+      # Tests start their own ephemeral MySQL (mysql-memory-server)
+      - run: npm run coverage

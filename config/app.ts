@@ -1,5 +1,6 @@
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/core/http'
+import { isPrivateProxy } from '#core/http/trusted_proxy'
 
 /**
  * The configuration settings used by the HTTP server
@@ -23,6 +24,13 @@ export const http = defineConfig({
    * from anywhere inside your application.
    */
   useAsyncLocalStorage: false,
+
+  /**
+   * The panel runs behind a reverse proxy (Caddy in docker-compose), so the
+   * client address comes from X-Forwarded-For when the peer is a private or
+   * loopback address (docker networks included).
+   */
+  trustProxy: (address: string) => isPrivateProxy(address),
 
   router: {
     matcher: 'tree',
